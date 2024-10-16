@@ -1,0 +1,352 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0 #TODO: Need to adjust to actual version
+
+references:
+  workspace: &workspace ~/project
+
+  workspace_android: &workspace_android ~/project/android
+
+  workspace_ios: &workspace_ios ~/project/ios
+
+  android_build_outputs: &android_build_outputs ~/project/android/app/build/outputs
+  ios_build_outputs: &ios_build_outputs ~/project/ios/builds
+
+  # Configs
+  node_config: &node_config
+    working_directory: *workspace
+    docker:
+      - image: cimg/node:20.10.0 #TODO: Need to adjust to actual version
+      - image: cimg/ruby:3.0.0 #TODO: Need to adjust to actual version
+
+  android_config: &android_config
+    working_directory: *workspace_android
+    docker:
+      - image: cimg/android:2023.10.2-browsers #TODO: Need to adjust to actual version
+    resource_class: xlarge
+
+  ios_config: &ios_config
+    working_directory: *workspace_ios
+    macos:
+      xcode: 15.4.0 #TODO: Need to adjust to actual version
+    environment:
+      FL_OUTPUT_DIR: output
+
+commands:
+  # .env
+  create_dot_env_file:
+    description: Create dot env file
+    steps:
+      - run:
+          working_directory: *workspace
+          name: Create .env file
+          command: |
+            cat \>> .env \<< EOF
+             BASE_URL_API=${BASE_URL_API}
+             BUNDLE_ID=${BUNDLE_ID}
+            EOF
+
+  # node_modules
+  install_node:
+    description: Install node
+    steps:
+      - node/install:
+          install-yarn: true
+          node-version: "20.18.0" #TODO: Need to adjust to actual LTS version
+
+  install_package:
+    description: Install packages
+    steps:
+      - node/install-packages:
+          app-dir: *workspace
+          pkg-manager: yarn
+
+  # gem
+  upgrade_ruby_dependencies:
+    description: Upgrade Ruby Dependencies
+    steps:
+      - run:
+          name: Upgrade Ruby Dependencies
+          command: |
+            sudo gem install fastlane
+            sudo gem install bundler
+            sudo bundle install
+
+  upgrade_cocoapods:
+    description: Upgrade cocoapods
+    steps:
+      - run:
+          name: Upgrade Cocoapods
+          command: |
+            sudo gem install cocoapods
+
+  upgrade_ninja_build:
+    description: Upgrade ninja build
+    steps:
+      - run:
+          name: Upgrade Ninja Build
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y ninja-build cmake
+
+  # android
+  decode_google_play_key:
+    description: Decode google play key
+    steps:
+      - run:
+          working_directory: *workspace_android
+          name: Decode Google Play key
+          command: echo ${GOOGLE_PLAY_KEY} | base64 --decode > ./fastlane/google_play_key.json
+
+  build_android_app_aab:
+    description: Build android app aab
+    steps:
+      - run:
+          working_directory: *workspace_android
+          name: Build android AAB application
+          command: bundle exec fastlane build_aab
+
+  build_android_app_apk:
+    description: Build android app apk
+    steps:
+      - run:
+          working_directory: *workspace_android
+          name: Build android APK application
+          command: bundle exec fastlane build_apk
+
+  # TODO: Use for internal tests deploy if needed
+  deploy_android_to_internal_tests:
+    description: Deploy android to internal tests
+    steps:
+      - run:
+          working_directory: *workspace_android
+          name: Build android application and deploy it to the Google Play Internal tests
+          command: bundle exec fastlane deploy_internal
+
+  deploy_android_to_beta_tests:
+    description: Deploy android to beta tests
+    steps:
+      - run:
+          working_directory: *workspace_android
+          name: Build android application and deploy it to the Google Play Beta tests
+          command: bundle exec fastlane deploy_beta
+
+  store_android_app:
+    description: Store android app
+    steps:
+      - store_artifacts:
+          path: *android_build_outputs
+
+  # ios
+  decode_app_store_auth_key:
+    description: Decode app store auth key
+    steps:
+      - run:
+          name: Decode app store auth key
+          command: echo ${APP_STORE_AUTH_KEY} | base64 --decode > ./AuthKey_${APP_STORE_API_KEY_ID}.p8
+
+  install_pods:
+    description: Install pods
+    steps:
+      - run:
+          name: Install pods
+          command: |
+            if [ ! -d "Pods" ]
+            then
+              pod install
+            fi
+
+  prepare_ios_certs:
+    description: Prepare ios certs
+    steps:
+      - run:
+          name: Setup ios certs for current flavor
+          command: bundle exec fastlane prepare_certs
+
+  build_ios_app:
+    description: Build ios app
+    steps:
+      - run:
+          name: Build ios application
+          command: bundle exec fastlane build
+
+  deploy_ios_app_to_test_flight:
+    description: Deploy ios app to test flight
+    steps:
+      - run:
+          name: Build ios application and deploy it to the TestFlight
+          command: bundle exec fastlane deploy_testflight
+
+  store_ios_app:
+    description: Store ios app
+    steps:
+      - store_artifacts:
+          path: *ios_build_outputs
+
+  # Eslint
+  eslint_check:
+    description: Eslint check
+    steps:
+      - run:
+          name: Eslint check for the application
+          command: yarn lint
+
+  # maintains
+  show_node_version:
+    description: Show node version
+    steps:
+      - run:
+          name: "Show node version"
+          command: node --version
+
+  show_android_dev_env:
+    description: Show android dev environment
+    steps:
+      - run:
+          name: Show android dev environment
+          command: |
+            npx react-native info
+            fastlane -v
+            bundler -v
+            java -version
+
+  show_ios_dev_env:
+    description: Show ios dev environment
+    steps:
+      - run:
+          name: Show ios dev environment
+          command: |
+            fastlane -v
+            bundler -v
+            xcodebuild -version
+
+jobs:
+  lint-check:
+    <<: *node_config
+    steps:
+      - checkout
+      - install_node
+      - show_node_version
+      - install_package
+      - eslint_check
+
+  build-android_apk:
+    <<: *android_config
+    steps:
+      - checkout:
+          path: *workspace
+      - upgrade_ninja_build
+      - create_dot_env_file
+      - decode_google_play_key
+      - install_package
+      - upgrade_ruby_dependencies
+      - show_android_dev_env
+      - build_android_app_apk
+      - store_android_app
+
+  build-android_aab:
+    <<: *android_config
+    steps:
+      - checkout:
+          path: *workspace
+      - upgrade_ninja_build
+      - create_dot_env_file
+      - decode_google_play_key
+      - install_package
+      - upgrade_ruby_dependencies
+      - show_android_dev_env
+      - build_android_app_aab
+      - store_android_app
+
+  deploy-android-to-beta-tests:
+    <<: *android_config
+    steps:
+      - checkout:
+          path: *workspace
+      - upgrade_ninja_build
+      - create_dot_env_file
+      - decode_google_play_key
+      - install_package
+      - upgrade_ruby_dependencies
+      - show_android_dev_env
+      - deploy_android_to_beta_tests
+      - store_android_app
+
+  build-ios:
+    <<: *ios_config
+    steps:
+      - checkout:
+          path: *workspace
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:UKRBxMdpM3ZxvAcRu21iyCny4ohvKkKcHqhlS3zNQDc"
+      - create_dot_env_file
+      - decode_app_store_auth_key
+      - install_package
+      - upgrade_ruby_dependencies
+      - prepare_ios_certs
+      - upgrade_cocoapods
+      - install_pods
+      - show_ios_dev_env
+      - build_ios_app
+      - store_ios_app
+
+  deploy-ios-to-test-flight:
+    <<: *ios_config
+    steps:
+      - checkout:
+          path: *workspace
+      - create_dot_env_file
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:UKRBxMdpM3ZxvAcRu21iyCny4ohvKkKcHqhlS3zNQDc"
+      - decode_app_store_auth_key
+      - install_package
+      - upgrade_ruby_dependencies
+      - prepare_ios_certs
+      - upgrade_cocoapods
+      - install_pods
+      - deploy_ios_app_to_test_flight
+      - store_ios_app
+
+workflows:
+  eslint-check:
+    jobs:
+      - lint-check
+  test-builds:
+    when:
+      and:
+        - equal: [dev, << pipeline.git.branch >>]
+    jobs:
+      - approve-build-android_apk:
+          type: approval
+      - build-android_apk:
+          requires:
+            - approve-build-android_apk
+      - approve-build-ios:
+          type: approval
+      - build-ios:
+          requires:
+            - approve-build-ios
+
+  prod-deploy:
+    when:
+      and:
+        - equal: [prod, << pipeline.git.branch >>]
+    jobs:
+      - approve-deploy-ios-to-test-flight:
+          type: approval
+      - deploy-ios-to-test-flight:
+          requires:
+            - approve-deploy-ios-to-test-flight
+      - approve-deploy-android-to-beta-tests:
+          type: approval
+      - deploy-android-to-beta-tests:
+          requires:
+            - approve-deploy-android-to-beta-tests
+      - approve-build-android_aab:
+          type: approval
+      - build-android_aab:
+          requires:
+            - approve-build-android_aab

@@ -1,0 +1,111 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+require 'dotenv'
+Dotenv.load('../../.env')
+
+default_platform(:ios)
+
+platform :ios do
+  # Bundle ID
+  bundle_id = ENV["BUNDLE_ID"]
+
+  # paths
+  build_path = File.join(Dir.pwd, "..", 'builds')
+  workspace_path = File.join(Dir.pwd, "..", 'Project.xcworkspace') # TODO: change to your workspace path
+  appstore_api_key_path = File.join(Dir.pwd, "..", "AuthKey_#{ENV["APP_STORE_API_KEY_ID"]}.p8")
+
+  before_all do
+    setup_circle_ci
+  end
+
+  desc "Sync certs, profiles, keys for all targets"
+  lane :match_certificates do
+    match(
+      app_identifier: [bundle_id],
+      readonly: is_ci
+    )
+  end
+
+  desc "Get appstore certs"
+  lane :prepare_certs do
+    match(
+      type: "appstore",
+      app_identifier: [bundle_id],
+      readonly: is_ci
+    )
+  end
+
+  desc "Sync App Store connection"
+  # TODO make as privat line after debugging
+  # private_lane :get_api_key do
+  private_lane :get_api_key do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_API_KEY_ISSUER_ID"],
+      key_filepath: appstore_api_key_path
+    )
+  end
+
+  desc "Bump build numbers from latest testflight. Setup version number"
+  lane :bump_version do |options|
+    new_version_number = options[:version]
+
+    if new_version_number
+      increment_version_number(version_number: new_version_number)
+    end
+
+    latest_build_num = latest_testflight_build_number(api_key: Actions.lane_context[SharedValues::APP_STORE_CONNECT_API_KEY])
+
+    increment_build_number({
+      build_number: latest_build_num + 1
+    })
+  end
+
+  desc "Build ios app"
+  lane :build do
+    get_api_key
+  build_ios_app(
+      configuration: "Release",
+      workspace: workspace_path,
+      scheme: 'Project Scheme', # TODO: change to your scheme
+      build_path: build_path,
+      output_directory: build_path,
+      clean: true,
+      export_method: 'app-store',
+      export_options: {
+        provisioningProfiles: {
+          bundle_id => "match AppStore "+bundle_id,
+         
+        }
+      }
+  )
+  end
+
+  desc "Build and push a new release build to testflight"
+  lane :deploy_testflight do |options|
+    version = options[:version]
+
+    get_api_key
+    bump_version(version: version)
+    build
+    upload_to_testflight(
+      api_key: Actions.lane_context[SharedValues::APP_STORE_CONNECT_API_KEY],
+      skip_submission: true,
+      skip_waiting_for_build_processing: true
+    )
+ end
+
+end
