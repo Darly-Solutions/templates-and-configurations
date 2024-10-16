@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.1.0
+  node: circleci/node@5.1.0 #TODO: Need to adjust to actual version
 
 references:
   workspace: &workspace ~/project
@@ -17,19 +17,19 @@ references:
   node_config: &node_config
     working_directory: *workspace
     docker:
-      - image: cimg/node:20.10.0
-      - image: cimg/ruby:3.0.0
+      - image: cimg/node:20.10.0 #TODO: Need to adjust to actual version
+      - image: cimg/ruby:3.0.0 #TODO: Need to adjust to actual version
 
   android_config: &android_config
     working_directory: *workspace_android
     docker:
-      - image: cimg/android:2023.10.2-browsers
+      - image: cimg/android:2023.10.2-browsers #TODO: Need to adjust to actual version
     resource_class: xlarge
 
   ios_config: &ios_config
     working_directory: *workspace_ios
     macos:
-      xcode: 15.4.0
+      xcode: 15.4.0 #TODO: Need to adjust to actual version
     environment:
       FL_OUTPUT_DIR: output
 
@@ -53,7 +53,7 @@ commands:
     steps:
       - node/install:
           install-yarn: true
-          node-version: "18.16.0"
+          node-version: "20.18.0" #TODO: Need to adjust to actual LTS version
 
   install_package:
     description: Install packages
@@ -115,6 +115,7 @@ commands:
           name: Build android APK application
           command: bundle exec fastlane build_apk
 
+  # TODO: Use for internal tests deploy if needed
   deploy_android_to_internal_tests:
     description: Deploy android to internal tests
     steps:
