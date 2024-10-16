@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="fastlane.lanes">
+    
+    
+    
+      
+      <testcase classname="fastlane.lanes" name="00: default_platform" time="0.000488">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="01: setup_circle_ci" time="0.165263">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="02: Switch to ios get_api_key lane" time="0.00044">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="03: app_store_connect_api_key" time="0.00664">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="04: Switch to ios bump_version lane" time="0.000468">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="05: latest_testflight_build_number" time="1.931356">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="06: increment_build_number" time="3.429261">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="07: Switch to ios build lane" time="0.000834">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="08: Switch to ios get_api_key lane" time="0.001078">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="09: app_store_connect_api_key" time="0.003769">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="10: build_ios_app" time="1075.841957">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="11: upload_to_testflight" time="160.009966">
+        
+          <failure message="/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/actions/actions_helper.rb:67:in `execute_action'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:255:in `block in execute_action'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:229:in `chdir'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:229:in `execute_action'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:157:in `trigger_action_by_name'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:101:in `block (2 levels) in parsing_binding'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:49:in `block in execute'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:45:in `chdir'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/runner.rb:45:in `execute'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/lane_manager.rb:47:in `cruise_lane'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/command_line_handler.rb:36:in `handle'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/commands_generator.rb:110:in `block (2 levels) in run'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/commander-4.6.0/lib/commander/command.rb:187:in `call'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/commander-4.6.0/lib/commander/command.rb:157:in `run'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/commander-4.6.0/lib/commander/runner.rb:444:in `run_active_command'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:124:in `run!'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/commander-4.6.0/lib/commander/delegates.rb:18:in `run!'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/commands_generator.rb:354:in `run'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/commands_generator.rb:43:in `start'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/fastlane/lib/fastlane/cli_tools_distributor.rb:123:in `take_off'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/gems/fastlane-2.217.0/bin/fastlane:23:in `&lt;top (required)&gt;'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/bin/fastlane:23:in `load'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/bin/fastlane:23:in `&lt;main&gt;'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/bin/ruby_executable_hooks:22:in `eval'&#10;/Users/heorhiims/.rvm/gems/ruby-2.7.6/bin/ruby_executable_hooks:22:in `&lt;main&gt;'&#10;&#10;Error uploading ipa file: &#10; [Application Loader Error Output]: ERROR: Asset validation failed (90186) Invalid Pre-Release Train. The train version '1.0' is closed for new build submissions (ID: a64e3c9d-711a-438e-afeb-a8f7c1a1a683)&#10;[Application Loader Error Output]: ERROR: Asset validation failed (90062) This bundle is invalid. The value for key CFBundleShortVersionString [1.0] in the Info.plist file must contain a higher version than that of the previously approved version [1.0]. Please find more information about CFBundleShortVersionString at https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundleshortversionstring (ID: 2268f7e1-992f-4428-8639-a2bc5d97a9d6)&#10;[Application Loader Error Output]: Error uploading '/var/folders/08/wvkw9h_s2jl8hrxmb6k0yhrh0000gq/T/ab11775a-d055-4526-a307-8ac2b8b9cd31.ipa'.&#10;[Application Loader Error Output]: Asset validation failed Invalid Pre-Release Train. The train version '1.0' is closed for new build submissions (ID: a64e3c9d-711a-438e-afeb-a8f7c1a1a683) (90186)&#10;[Application Loader Error Output]: Asset validation failed This bundle is invalid. The value for key CFBundleShortVersionString [1.0] in the Info.plist file must contain a higher version than that of the previously approved version [1.0]. Please find more information about CFBundleShortVersionString at https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundleshortversionstring (ID: 2268f7e1-992f-4428-8639-a2bc5d97a9d6) (90062)&#10;[Application Loader Error Output]: The call to the altool completed with a non-zero exit status: 1. This indicates a failure." />
+        
+      </testcase>
+    
+  </testsuite>
+</testsuites>

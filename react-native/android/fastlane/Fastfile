@@ -1,0 +1,199 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+require 'dotenv'
+Dotenv.load('../../.env')
+
+default_platform(:android)
+
+platform :android do
+  #paths
+  gradle_file_path = Dir.pwd + "/../app/build.gradle"
+  play_store_key_path = Dir.pwd + "/google_play_key.json"
+
+  before_all do
+    setup_circle_ci
+  end
+
+
+  private_lane :get_latest_version_code do
+
+    bundle_id = ENV["BUNDLE_ID"]
+    internal_build_number = 0
+    prod_build_number = 0
+    beta_build_number = 0
+    alpha_build_number = 0
+
+    begin
+      internalArray = google_play_track_version_codes(
+        track: "internal",
+        package_name: bundle_id,
+        json_key: play_store_key_path
+      )
+      rescue
+      internalArray = []
+      end
+
+      begin
+      prodArray = google_play_track_version_codes(
+        track: "production",
+        package_name: bundle_id,
+        json_key: play_store_key_path
+      )
+      rescue
+      prodArray = []
+      end
+
+      begin
+      betaArray = google_play_track_version_codes(
+        track: "beta",
+        package_name: bundle_id,
+        json_key: play_store_key_path
+      )
+      rescue
+        betaArray = []
+      end
+
+      begin
+      alphaArray = google_play_track_version_codes(
+        track: "alpha",
+        package_name: bundle_id,
+        json_key: play_store_key_path
+      )
+      rescue
+        alphaArray = []
+      end
+
+      hasAlphaValues = !alphaArray.empty?
+      hasBetaValues = !betaArray.empty?
+      hasInternalValues = !internalArray.empty?
+      hasProdValues = !prodArray.empty?
+
+      if hasAlphaValues
+        alpha_build_number = alphaArray[0].to_i
+      end
+      if hasBetaValues
+        beta_build_number = betaArray[0].to_i
+      end
+      if hasInternalValues
+        internal_build_number = internalArray[0].to_i
+      end
+      if hasProdValues
+        prod_build_number = prodArray[0].to_i
+      end
+
+      [internal_build_number, prod_build_number, beta_build_number, alpha_build_number].max
+  end
+
+  desc "Fetching version code from play console and increment it"
+  lane :bump_version do |options|
+    new_version_name = options[:version]
+
+    if new_version_name
+      increment_version_name(
+        gradle_file_path: gradle_file_path,
+        version_name: new_version_name
+      )
+    end
+
+    increment_version_code(
+      gradle_file_path: gradle_file_path,
+      version_code: get_latest_version_code() + 1
+    )
+  end
+
+  lane :build_aab do
+    keystore_name = ENV["ANDROID_KEYSTORE_NAME"]
+    keystore_password = ENV["ANDROID_KEYSTORE_PASSWORD"]
+    key_alias = ENV["ANDROID_KEY_ALIAS"]
+    key_password = ENV["ANDROID_KEY_PASSWORD"]
+
+    releaseFilePath = File.join(Dir.pwd, "../app/", keystore_name)
+
+    gradle(task: 'clean')
+
+    # TODO change to " print_command: false " after debugging
+    gradle(
+      task: 'bundle',
+      build_type: 'release',
+      print_command: false,
+      properties: {
+        "android.injected.signing.store.file" => releaseFilePath,
+        "android.injected.signing.store.password" => keystore_password,
+        "android.injected.signing.key.alias" => key_alias,
+        "android.injected.signing.key.password" => key_password,
+      }
+    )
+  end
+
+  lane :build_apk do
+    keystore_name = ENV["ANDROID_KEYSTORE_NAME"]
+    keystore_password = ENV["ANDROID_KEYSTORE_PASSWORD"]
+    key_alias = ENV["ANDROID_KEY_ALIAS"]
+    key_password = ENV["ANDROID_KEY_PASSWORD"]
+
+    releaseFilePath = File.join(Dir.pwd, "../app/", keystore_name)
+
+    gradle(task: 'clean')
+    bump_version()
+
+    # TODO change to " print_command: false " after debugging
+    gradle(
+      task: 'assemble',
+      build_type: 'release',
+      print_command: true,
+      properties: {
+        "android.injected.signing.store.file" => releaseFilePath,
+        "android.injected.signing.store.password" => keystore_password,
+        "android.injected.signing.key.alias" => key_alias,
+        "android.injected.signing.key.password" => key_password,
+      }
+    )
+  end
+
+  desc "Build and deploy app to internal testing"
+  lane :deploy_internal do |options|
+    version = options[:version]
+
+    bump_version(version:version)
+    build_aab
+    upload_to_play_store(
+      track: 'internal',
+      aab: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      skip_upload_aab: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+      json_key: play_store_key_path
+    )
+  end
+
+  desc "Build and deploy app to beta testing"
+  lane :deploy_beta do |options|
+    version = options[:version]
+
+    bump_version(version:version)
+    build_aab
+    upload_to_play_store(
+      track: 'beta',
+      aab: Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      skip_upload_aab: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+      json_key: play_store_key_path
+    )
+  end
+end
